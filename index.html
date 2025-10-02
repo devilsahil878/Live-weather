@@ -147,6 +147,7 @@ button:hover {
     <input type="date" id="dateInput" />
     <button id="searchBtn">Search</button>
     <button id="autoLocBtn">Use My Location 🚀</button>
+    <button id="stopVoiceBtn">Stop Voice 🔇</button>
   </div>
 
   <div id="currentWeather"></div>
@@ -162,6 +163,7 @@ const stateSelect = document.getElementById('stateSelect');
 const dateInput = document.getElementById('dateInput');
 const searchBtn = document.getElementById('searchBtn');
 const autoLocBtn = document.getElementById('autoLocBtn');
+const stopVoiceBtn = document.getElementById('stopVoiceBtn');
 const currentWeatherDiv = document.getElementById('currentWeather');
 const forecastDiv = document.getElementById('forecast');
 const favoritesDiv = document.getElementById('favorites');
@@ -187,6 +189,22 @@ const stateLogos = {
   "Dehradun": "🌲",
   "Shimla": "🏔️"
 };
+
+function speak(text){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel(); // cancel previous voice if still running
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 1;
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+function stopVoice(){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+  }
+}
 
 function showFavorites(){
   favoritesDiv.innerHTML = '';
@@ -232,7 +250,6 @@ function setBackground(desc){
 
 async function fetchWeather(city){
   try {
-    // Current weather
     let res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`);
     let data = await res.json();
     if(data.cod != 200) throw new Error(data.message);
@@ -240,6 +257,8 @@ async function fetchWeather(city){
     let emoji = getWeatherEmoji(data.weather[0].description);
     setBackground(data.weather[0].description);
     let logo = stateLogos[data.name] || "🏙️";
+
+    const weatherText = `${data.name}, ${data.sys.country}. Temperature is ${data.main.temp} degrees Celsius. Humidity is ${data.main.humidity} percent. Weather condition: ${data.weather[0].description}.`;
 
     currentWeatherDiv.innerHTML = `
       <div class="weather-card">
@@ -253,7 +272,8 @@ async function fetchWeather(city){
       </div>
     `;
 
-    // Forecast
+    speak(weatherText);
+
     res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`);
     let forecastData = await res.json();
     let selectedDate = dateInput.value;
@@ -296,6 +316,8 @@ autoLocBtn.onclick = ()=>{
     });
   } else { alert('Geolocation not supported'); }
 };
+
+stopVoiceBtn.onclick = stopVoice;
 
 showFavorites();
 </script>
